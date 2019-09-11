@@ -5,6 +5,15 @@
  */
 package ejemploconexionbasedatos;
 
+import java.awt.Cursor;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
 /**
  *
  * @author cymaniatico
@@ -14,6 +23,8 @@ public class FrmContactos extends javax.swing.JFrame {
     /**
      * Creates new form FrmContactos
      */
+    
+    InfoConexion info = new InfoConexion();
     public FrmContactos() {
         initComponents();
     }
@@ -38,7 +49,7 @@ public class FrmContactos extends javax.swing.JFrame {
         btnAgregar = new javax.swing.JButton();
         btnActualizar = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        tableContactos = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -61,8 +72,13 @@ public class FrmContactos extends javax.swing.JFrame {
         btnAgregar.setText("Agregar");
 
         btnActualizar.setText("Actualizar");
+        btnActualizar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnActualizarActionPerformed(evt);
+            }
+        });
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        tableContactos.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -73,7 +89,7 @@ public class FrmContactos extends javax.swing.JFrame {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        jScrollPane1.setViewportView(jTable1);
+        jScrollPane1.setViewportView(tableContactos);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -138,6 +154,74 @@ public class FrmContactos extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void btnActualizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnActualizarActionPerformed
+        // TODO add your handling code here:
+        mostrarLista();
+    }//GEN-LAST:event_btnActualizarActionPerformed
+
+    public void mostrarLista(){
+        try {
+            DefaultTableModel modelo = new DefaultTableModel();
+            tableContactos.setModel(modelo);
+            java.sql.Connection conexion = DriverManager.getConnection(info.getUrl(), info.getUsername(), info.getPassword());
+            
+            Statement statement = conexion.createStatement();
+            ResultSet rs = statement.executeQuery("call mostrarContacto()");
+            
+            System.out.println("Conexion exitosa");
+            
+            ResultSetMetaData rsMd = rs.getMetaData();
+            int cantColumnas = rsMd.getColumnCount();
+            modelo.addColumn("Id");
+            modelo.addColumn("Nombre");
+            modelo.addColumn("Direccion");
+            modelo.addColumn("Telefono");
+            
+            modelo.addColumn("Correo");
+            
+            while(rs.next()){
+                Object[] filas = new Object[cantColumnas];
+                for(int i=0; i<cantColumnas; i++){
+                    filas[i]=rs.getObject(i+1);
+                }
+                modelo.addRow(filas);
+            }
+            
+            
+            rs.close();
+            statement.close();
+            conexion.close();
+            
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+    
+    public void enviarInfo() {
+        String nombre = txtNombre.getText();
+        String direccion = txtDireccion.getText();
+        String telefono = txtTelefono.getText();
+        String correo = txtCorreo.getText();
+        try {
+            
+            java.sql.Connection connection = DriverManager.getConnection(info.getUrl(), info.getUsername(), info.getPassword());
+
+            Statement statement = connection.createStatement();
+            ResultSet ps = statement.executeQuery("call agregarContacto('" + nombre 
+                    + "', '" + direccion 
+                    + "', '"+telefono
+                    +"', '"+correo +"')");
+               
+            ps.close();
+            statement.close();
+            connection.close();
+            JOptionPane.showMessageDialog(null, "Te la has flipao Fernando!");
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Te marcaste un Federico;");
+            System.out.println(ex);
+        }
+    }
     /**
      * @param args the command line arguments
      */
@@ -181,7 +265,7 @@ public class FrmContactos extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
+    private javax.swing.JTable tableContactos;
     private javax.swing.JTextField txtCorreo;
     private javax.swing.JTextField txtDireccion;
     private javax.swing.JTextField txtNombre;
